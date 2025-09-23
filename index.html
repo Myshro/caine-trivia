@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>Anime Q&A</title>
+  <style>
+   
+  </style>
+</head>
+<body>
+  <h1>Q&A Viewer</h1>
+
+  <input type="file" id="file-input" accept=".csv">
+
+  <div class="question" id="question"></div>
+  <img id="qImage" style="display:none;">
+  
+  <div class="answer" id="answer"></div>
+  <img id="aImage" style="display:none;">
+  <div class="notes" id="notes" style="display: none;"></div>
+
+  <div class="controls">
+    <button id="prevButton" disabled>&lt; Prev</button>
+    <button id="revealButton" disabled>Reveal Answer</button>
+    <button id="nextButton" disabled>Next &gt;</button>
+  </div>
+
+  <div id="counter"></div>
+
+  <script>
+    let questions = [];
+    let currentIndex = 0;
+
+    document.getElementById('file-input').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        parseCSV(event.target.result);
+      };
+      reader.readAsText(file);
+    });
+
+    function splitCSV(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+
+            if (char === '"') {
+            if (inQuotes && line[i+1] === '"') {
+                current += '"';
+                i++; // skip next quote
+            } else {
+                inQuotes = !inQuotes;
+            }
+            } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+            } else {
+            current += char;
+            }
+        }
+        result.push(current);
+        return result;
+    }
+
+
+    function parseCSV(csv) {
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',');
+      questions = lines.slice(1).map(line => {
+        console.log(line)
+        // const values = line.split(',')
+        const values = splitCSV(line);
+        return {
+          question: values[0] || "",
+          answer: values[1] || "",
+          qImage: values[2] || "",
+          aImage: values[3] || "",
+          notes: values[4] || ""
+        };
+      });
+
+      if (questions.length > 0) {
+        enableControls();
+        showQuestion();
+      }
+
+      console.log(questions)
+    }
+
+    function enableControls() {
+      document.getElementById('revealButton').disabled = false;
+      document.getElementById('prevButton').disabled = false;
+      document.getElementById('nextButton').disabled = false;
+
+      document.getElementById('revealButton').addEventListener('click', toggleAnswer);
+      document.getElementById('prevButton').addEventListener('click', prevQuestion);
+      document.getElementById('nextButton').addEventListener('click', nextQuestion);
+    }
+
+    function showQuestion() {
+      const q = questions[currentIndex];
+      document.getElementById('question').textContent = q.question;
+      
+      const qImg = document.getElementById('qImage');
+      qImg.style.display = q.qImage ? 'block' : 'none';
+      qImg.src = q.qImage;
+
+      const ansDiv = document.getElementById('answer');
+      ansDiv.textContent = q.answer;
+      ansDiv.style.display = 'none'; // hide until reveal
+
+      const aImg = document.getElementById('aImage');
+      aImg.style.display = 'none'; // hide until reveal
+      aImg.src = q.aImage;
+
+      const notesDiv = document.getElementById('notes');
+      notesDiv.textContent = q.notes ? `${q.notes}` : "";
+
+      document.getElementById('counter').textContent = 
+        `Question ${currentIndex + 1} of ${questions.length}`;
+    }
+
+    function toggleAnswer() {
+      const ansDiv = document.getElementById('answer');
+      const aImg = document.getElementById('aImage');
+      const notes = document.getElementById('notes');
+      if (ansDiv.style.display === 'none') {
+        ansDiv.style.display = 'block';
+        notes.style.display = 'block';
+        if (aImg.src) aImg.style.display = 'block';
+      } else {
+        ansDiv.style.display = 'none';
+        aImg.style.display = 'none';
+        notes.style.display = 'none';
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+      }
+    }
+
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        showQuestion();
+      }
+    }
+  </script>
+</body>
+</html>
