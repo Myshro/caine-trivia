@@ -3,38 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <title>Anime Q&A</title>
-  <style>
-   
-  </style>
+  <title>CaineTrivia</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Q&A Viewer</h1>
-
-  <input type="file" id="file-input" accept=".csv">
-
-  <div class="question" id="question"></div>
-  <img id="qImage" style="display:none;">
-  
-  <div class="answer" id="answer"></div>
-  <img id="aImage" style="display:none;">
-  <div class="notes" id="notes" style="display: none;"></div>
-
-  <div class="controls">
-    <button id="prevButton" disabled>&lt; Prev</button>
-    <button id="revealButton" disabled>Reveal Answer</button>
-    <button id="nextButton" disabled>Next &gt;</button>
+  <div class="header">
+    <h1>Trivia Site</h1>
+    <div class="file-upload">
+      <label for="file-input" class="file-label">
+        Choose CSV File
+      </label>
+      <input type="file" id="file-input" accept=".csv">
+    </div>
   </div>
 
-  <div id="counter"></div>
+  <div class="main-container" id="mainContainer">
+    <div class="split-container">
+      <!-- Left Side - Question -->
+      <div class="question-panel">
+        <div class="panel-header">Question</div>
+        <div class="content-wrapper">
+          <div class="question" id="question"></div>
+          <img id="qImage" class="question-image" style="display:none;">
+        </div>
+      </div>
+
+      <!-- Right Side - Answer -->
+      <div class="answer-panel">
+        <div class="panel-header">Answer</div>
+        <div class="content-wrapper">
+          <img id="stateGif" class="state-gif" src="thinking.gif" style="display:none;">
+          <div class="answer" id="answer" style="display:none;"></div>
+          <img id="aImage" class="answer-image" style="display:none;">
+          <div class="notes" id="notes" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <div class="controls">
+        <button id="prevButton" disabled>← Previous</button>
+        <button id="revealButton" disabled>Reveal Answer</button>
+        <button id="nextButton" disabled>Next →</button>
+      </div>
+      <div id="counter"></div>
+      <div class="keyboard-hint">Use arrow keys (← →) to navigate, Space to reveal answer</div>
+    </div>
+  </div>
 
   <script>
     let questions = [];
     let currentIndex = 0;
+    let answerRevealed = false;
+    
+    const ANSWER_STATES = { 
+      "HIDDEN": "thinking.gif",
+      "REVEALED": "answering.gif"
+    };
 
+    // Initialize
     document.getElementById('file-input').addEventListener('change', function(e) {
       const file = e.target.files[0];
+      if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = function(event) {
         parseCSV(event.target.result);
@@ -42,39 +73,61 @@
       reader.readAsText(file);
     });
 
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (questions.length === 0) return;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (!document.getElementById('prevButton').disabled) {
+            prevQuestion();
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (!document.getElementById('nextButton').disabled) {
+            nextQuestion();
+          }
+          break;
+        case ' ':
+        case 'Space':
+          e.preventDefault();
+          if (!document.getElementById('revealButton').disabled) {
+            toggleAnswer();
+          }
+          break;
+      }
+    });
+
     function splitCSV(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-
-            if (char === '"') {
-            if (inQuotes && line[i+1] === '"') {
-                current += '"';
-                i++; // skip next quote
-            } else {
-                inQuotes = !inQuotes;
-            }
-            } else if (char === ',' && !inQuotes) {
-            result.push(current);
-            current = '';
-            } else {
-            current += char;
-            }
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i+1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
         }
-        result.push(current);
-        return result;
+      }
+      result.push(current);
+      return result;
     }
-
 
     function parseCSV(csv) {
       const lines = csv.trim().split('\n');
-      const headers = lines[0].split(',');
       questions = lines.slice(1).map(line => {
-        console.log(line)
-        // const values = line.split(',')
         const values = splitCSV(line);
         return {
           question: values[0] || "",
@@ -84,20 +137,18 @@
           notes: values[4] || ""
         };
       });
-
+      
       if (questions.length > 0) {
+        document.getElementById('mainContainer').classList.add('active');
         enableControls();
         showQuestion();
       }
-
-      console.log(questions)
     }
 
     function enableControls() {
       document.getElementById('revealButton').disabled = false;
-      document.getElementById('prevButton').disabled = false;
       document.getElementById('nextButton').disabled = false;
-
+      
       document.getElementById('revealButton').addEventListener('click', toggleAnswer);
       document.getElementById('prevButton').addEventListener('click', prevQuestion);
       document.getElementById('nextButton').addEventListener('click', nextQuestion);
@@ -105,39 +156,80 @@
 
     function showQuestion() {
       const q = questions[currentIndex];
+      
+      // Update question
       document.getElementById('question').textContent = q.question;
       
+      // Update question image
       const qImg = document.getElementById('qImage');
-      qImg.style.display = q.qImage ? 'block' : 'none';
-      qImg.src = q.qImage;
-
-      const ansDiv = document.getElementById('answer');
-      ansDiv.textContent = q.answer;
-      ansDiv.style.display = 'none'; // hide until reveal
-
-      const aImg = document.getElementById('aImage');
-      aImg.style.display = 'none'; // hide until reveal
-      aImg.src = q.aImage;
-
-      const notesDiv = document.getElementById('notes');
-      notesDiv.textContent = q.notes ? `${q.notes}` : "";
-
+      if (q.qImage) {
+        qImg.style.display = 'block';
+        qImg.src = q.qImage;
+      } else {
+        qImg.style.display = 'none';
+      }
+      
+      // Hide answer initially
+      hideAnswer();
+      
+      // Set answer content (but keep hidden)
+      document.getElementById('answer').textContent = q.answer;
+      document.getElementById('aImage').src = q.aImage;
+      document.getElementById('notes').textContent = q.notes || "";
+      
+      // Update counter
       document.getElementById('counter').textContent = 
-        `Question ${currentIndex + 1} of ${questions.length}`;
+        `${currentIndex + 1} / ${questions.length}`;
+      
+      // Update button states
+      document.getElementById('prevButton').disabled = currentIndex === 0;
+      document.getElementById('nextButton').disabled = currentIndex === questions.length - 1;
+      
+      // Update reveal button text
+      document.getElementById('revealButton').textContent = 'Reveal Answer';
+      
+      // Show thinking GIF
+      showStateGif(ANSWER_STATES.HIDDEN);
+    }
+
+    function showStateGif(gifUrl) {
+      const stateGif = document.getElementById('stateGif');
+      stateGif.src = gifUrl;
+      stateGif.style.display = 'block';
+    }
+
+    function hideAnswer() {
+      answerRevealed = false;
+      document.getElementById('answer').style.display = 'none';
+      document.getElementById('aImage').style.display = 'none';
+      document.getElementById('notes').style.display = 'none';
+      showStateGif(ANSWER_STATES.HIDDEN);
     }
 
     function toggleAnswer() {
       const ansDiv = document.getElementById('answer');
       const aImg = document.getElementById('aImage');
       const notes = document.getElementById('notes');
-      if (ansDiv.style.display === 'none') {
+      const revealBtn = document.getElementById('revealButton');
+      const stateGif = document.getElementById('stateGif');
+      
+      if (!answerRevealed) {
+        // Show answer
         ansDiv.style.display = 'block';
-        notes.style.display = 'block';
-        if (aImg.src) aImg.style.display = 'block';
+        if (questions[currentIndex].aImage) {
+          aImg.style.display = 'block';
+        }
+        if (questions[currentIndex].notes) {
+          notes.style.display = 'block';
+        }
+        stateGif.style.display = 'none';
+        showStateGif(ANSWER_STATES.REVEALED);
+        revealBtn.textContent = 'Hide Answer';
+        answerRevealed = true;
       } else {
-        ansDiv.style.display = 'none';
-        aImg.style.display = 'none';
-        notes.style.display = 'none';
+        // Hide answer
+        hideAnswer();
+        revealBtn.textContent = 'Reveal Answer';
       }
     }
 
