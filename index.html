@@ -9,11 +9,35 @@
 <body>
   <div class="header">
     <h1>Trivia Site</h1>
-    <div class="file-upload">
-      <label for="file-input" class="file-label">
-        Choose CSV File
-      </label>
-      <input type="file" id="file-input" accept=".csv">
+    <div class="header-controls">
+      <div class="file-upload">
+        <label for="file-input" class="file-label">
+          Choose CSV File
+        </label>
+        <input type="file" id="file-input" accept=".csv">
+      </div>
+      <button class="shuffle-btn" id="shuffleButton" disabled>Shuffle Questions</button>
+      <!-- <button class="image-test-btn" onclick="openImageTestModal()">Test Image</button> -->
+    </div>
+  </div>
+
+  <!-- Image Test Modal -->
+  <div class="modal" id="imageTestModal">
+    <div class="modal-content">
+      <div class="modal-header">Test Image URL</div>
+      <div class="modal-input-group">
+        <label for="imageUrlInput">Enter Image URL:</label>
+        <input type="text" id="imageUrlInput" placeholder="https://example.com/image.jpg">
+      </div>
+      <div class="modal-buttons">
+        <!-- <button onclick="testImage()">Test Image</button> -->
+        <button onclick="closeImageTestModal()">Close</button>
+      </div>
+      <div class="test-image-preview">
+        <img id="testImagePreview" alt="Test image">
+        <div class="success" id="imageTestSuccess">✓ Image loaded successfully!</div>
+        <div class="error" id="imageTestError">✗ Failed to load image. Please check the URL.</div>
+      </div>
     </div>
   </div>
 
@@ -73,9 +97,80 @@
       reader.readAsText(file);
     });
 
+    // Shuffle button event listener
+    document.getElementById('shuffleButton').addEventListener('click', shuffleQuestions);
+
+    // Image Test Modal Functions
+    function openImageTestModal() {
+      document.getElementById('imageTestModal').classList.add('active');
+      document.getElementById('imageUrlInput').value = '';
+      document.getElementById('testImagePreview').style.display = 'none';
+      document.getElementById('imageTestSuccess').style.display = 'none';
+      document.getElementById('imageTestError').style.display = 'none';
+    }
+
+    function closeImageTestModal() {
+      document.getElementById('imageTestModal').classList.remove('active');
+    }
+
+    function testImage() {
+      const url = document.getElementById('imageUrlInput').value.trim();
+      if (!url) {
+        alert('Please enter an image URL');
+        return;
+      }
+
+      const img = document.getElementById('testImagePreview');
+      const successMsg = document.getElementById('imageTestSuccess');
+      const errorMsg = document.getElementById('imageTestError');
+
+      // Reset states
+      img.style.display = 'none';
+      successMsg.style.display = 'none';
+      errorMsg.style.display = 'none';
+
+      // Create new image to test loading
+      const testImg = new Image();
+      testImg.onload = function() {
+        img.src = url;
+        img.style.display = 'block';
+        successMsg.style.display = 'block';
+      };
+      testImg.onerror = function() {
+        img.style.display = 'none';
+        errorMsg.style.display = 'block';
+      };
+      testImg.src = url;
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('imageTestModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeImageTestModal();
+      }
+    });
+
+    // Shuffle Questions Function
+    function shuffleQuestions() {
+      if (questions.length <= 1) return;
+      
+      // Fisher-Yates shuffle algorithm
+      for (let i = questions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [questions[i], questions[j]] = [questions[j], questions[i]];
+      }
+      
+      // Reset to first question after shuffle
+      currentIndex = 0;
+      showQuestion();
+    }
+
     // Keyboard navigation
     document.addEventListener('keydown', function(e) {
       if (questions.length === 0) return;
+      
+      // Don't trigger keyboard shortcuts when modal is open
+      if (document.getElementById('imageTestModal').classList.contains('active')) return;
       
       switch(e.key) {
         case 'ArrowLeft':
@@ -140,6 +235,7 @@
       
       if (questions.length > 0) {
         document.getElementById('mainContainer').classList.add('active');
+        document.getElementById('shuffleButton').disabled = false;
         enableControls();
         showQuestion();
       }

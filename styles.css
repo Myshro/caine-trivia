@@ -21,12 +21,21 @@ body {
   justify-content: space-between;
   align-items: center;
   background: #ffffff;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 h1 {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.5px;
+}
+
+.header-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .file-upload {
@@ -52,6 +61,137 @@ h1 {
 .file-label:hover {
   background: #ffffff;
   color: #000000;
+}
+
+/* Image Test Modal Styles */
+.image-test-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.image-test-btn {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 2px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.image-test-btn:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 30px;
+  border: 2px solid #000000;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-input-group {
+  margin-bottom: 20px;
+}
+
+.modal-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.modal-input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #000000;
+  font-size: 0.95rem;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.test-image-preview {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.test-image-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border: 2px solid #000000;
+  display: none;
+}
+
+.test-image-preview .error {
+  color: #ff0000;
+  margin-top: 10px;
+  display: none;
+}
+
+.test-image-preview .success {
+  color: #008000;
+  margin-top: 10px;
+  display: none;
+}
+
+/* Shuffle Button */
+.shuffle-btn {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 2px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.shuffle-btn:hover:not(:disabled) {
+  background: #000000;
+  color: #ffffff;
+}
+
+.shuffle-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .main-container {
@@ -233,6 +373,16 @@ button:disabled {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .header-controls {
+    justify-content: center;
+  }
+  
   .split-container {
     flex-direction: column;
   }
@@ -253,5 +403,10 @@ button:disabled {
   
   .controls {
     flex-wrap: wrap;
+  }
+  
+  button {
+    padding: 8px 15px;
+    font-size: 0.85rem;
   }
 }
